@@ -20,33 +20,31 @@ def home(request):
     return render(request, "home.html", {})
 
 @csrf_exempt
-def get_stock_data(request):
+def get_forex_data(request):
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         #get ticker from the AJAX POST request
-        ticker = request.POST.get("ticker", "null")
-        ticker = ticker.upper()
+        from_symbol = request.POST.get("from_symbol", "null")
+        to_symbol = request.POST.get("to_symbol", "null")
+        from_symbol = from_symbol.upper()
+        to_symbol = to_symbol.upper()
 
-        if DATABASE_ACCESS == True:
-            #checking if the database already has data stored for this ticker before querying the Alpha Vantage API
-            if StockData.objects.filter(symbol=ticker).exists(): 
-                #We have the data in our database! Get the data from the database directly and send it back to the frontend AJAX call
-                entry = StockData.objects.filter(symbol=ticker)[0]
-                return HttpResponse(entry.data, content_type="application/json")
+        # if DATABASE_ACCESS == True:
+        #     #checking if the database already has data stored for this ticker before querying the Alpha Vantage API
+        #     if StockData.objects.filter(symbol=ticker).exists(): 
+        #         #We have the data in our database! Get the data from the database directly and send it back to the frontend AJAX call
+        #         entry = StockData.objects.filter(symbol=ticker)[0]
+        #         return HttpResponse(entry.data, content_type="application/json")
 
-        #obtain stock data from Alpha Vantage APIs
-        #get adjusted close data
-        price_series = requests.get(f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol={ticker}&apikey={APIKEY}&outputsize=full").json()
+        #obtain forex data from Alpha Vantage APIs
+        #get forex daily close data
+        forex_prices_series = requests.get(f"https://www.alphavantage.co/query?function=FX_DAILY&from_symbol={from_symbol}&to_symbol={to_symbol}&apikey={APIKEY}").json()
         
-        #get SMA (simple moving average) data
-        sma_series = requests.get(f"https://www.alphavantage.co/query?function=SMA&symbol={ticker}&interval=daily&time_period=10&series_type=close&apikey={APIKEY}").json()
-
         #package up the data in an output dictionary 
         output_dictionary = {}
-        output_dictionary["prices"] = price_series
-        output_dictionary["sma"] = sma_series
+        output_dictionary["forex_prices"] = forex_prices_series
 
         #save the dictionary to database
-        temp = StockData(symbol=ticker, data=json.dumps(output_dictionary))
+        temp = StockData(from_symbol=from_symbol, to_symbol = to_symbol, data=json.dumps(output_dictionary))
         temp.save()
 
         #return the data back to the frontend AJAX call 
