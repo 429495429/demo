@@ -8,6 +8,7 @@ import json
 
 
 APIKEY = "UHJBTQCAN7SDZW3O" 
+APIKEY2 = "NQGD5POOOSM90B7D"
 #replace "my_alphav_api_key" with your actual Alpha Vantage API key obtained from https://www.alphavantage.co/support/#api-key
 
 
@@ -38,10 +39,12 @@ def get_forex_data(request):
         #obtain forex data from Alpha Vantage APIs
         #get forex daily close data
         forex_prices_series = requests.get(f"https://www.alphavantage.co/query?function=FX_DAILY&from_symbol={from_symbol}&to_symbol={to_symbol}&apikey={APIKEY}").json()
-        
+        forex_prices_realtime = requests.get(f"https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency={from_symbol}&to_currency={to_symbol}&apikey={APIKEY2}").json()
+
         #package up the data in an output dictionary 
         output_dictionary = {}
         output_dictionary["forex_prices"] = forex_prices_series
+        output_dictionary["forex_realtime"] = forex_prices_realtime
 
         #save the dictionary to database
         temp = StockData(from_symbol=from_symbol, to_symbol = to_symbol, data=json.dumps(output_dictionary))
